@@ -115,8 +115,6 @@ class UUIDField(Field):
         """
         if isinstance(value, uuid.UUID):
             return str(value)
-            #elif isinstance(value, StringUUID):
-        #    return str(value)
         return value
 
     def value_to_string(self, obj):
@@ -138,7 +136,7 @@ class UUIDField(Field):
             return None
             # attempt to parse a UUID including cases in which value is a UUID
         # instance already to be able to get our StringUUID in.
-        return StringUUID(smart_unicode(value)).__unicode__()
+        return smart_unicode(value) #StringUUID(smart_unicode(value)) #.__unicode__()
 
     def get_prep_value(self, value):
         value = super(UUIDField, self).get_prep_value(value)
