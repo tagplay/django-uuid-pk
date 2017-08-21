@@ -2,7 +2,7 @@ from functools import update_wrapper
 import uuid
 
 from django import forms
-from django.db.models import Field, SubfieldBase
+from django.db.models import Field
 from django.utils.encoding import smart_unicode
 
 try:
@@ -12,6 +12,25 @@ try:
     psycopg2.extras.register_uuid()
 except (ImportError, AttributeError):
     pass
+
+
+class Creator(object):
+    """
+    Field descriptor that calls the to_python method on assignment.
+    This matches the Django<=1.9 fields.subclassing.Creator class.
+    See the Django 1.8 release notes where SubFieldBase was deprecated for
+    more: https://docs.djangoproject.com/en/1.10/releases/1.8/#subfieldbase
+    """
+    def __init__(self, field):
+        self.field = field
+
+    def __get__(self, obj, type=None):
+        if obj is None:
+            return self
+        return obj.__dict__[self.field.name]
+
+    def __set__(self, obj, value):
+        obj.__dict__[self.field.name] = self.field.to_python(value)
 
 
 class StringUUID(uuid.UUID):
@@ -41,8 +60,6 @@ class UUIDField(Field):
     new UUID value (calculated using the UUID1 method). Note that while all
     UUIDs are expected to be unique we enforce this with a DB constraint.
     """
-    __metaclass__ = SubfieldBase
-
     def __init__(self, version=4, node=None, clock_seq=None,
                  namespace=None, name=None, auto=False, *args, **kwargs):
         assert version in (1, 3, 4, 5), "UUID version %s is not supported." % version
@@ -162,6 +179,7 @@ class UUIDField(Field):
 
     def contribute_to_class(self, cls, name):
         super(UUIDField, self).contribute_to_class(cls, name)
+        setattr(cls, self.name, Creator(self))
         if self.primary_key:
             _wrap_model_save(cls)
 
