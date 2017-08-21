@@ -159,6 +159,9 @@ class UUIDField(Field):
         value = super(UUIDField, self).get_prep_value(value)
         return self.to_python(value)
 
+    def from_db_value(self, value, expression, connection, context):
+        return self.to_python(value)
+
     def formfield(self, **kwargs):
         defaults = {
             'form_class': forms.CharField,
