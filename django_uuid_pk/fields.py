@@ -130,8 +130,10 @@ class UUIDField(Field):
         """
         Casts uuid.UUID values into the format expected by the back end
         """
-        if isinstance(value, uuid.UUID):
+        if isinstance(value, uuid.UUID) and self.db_type(connection) != 'uuid':
             return str(value)
+        elif isinstance(value, basestring) and self.db_type(connection) == 'uuid':
+            return uuid.UUID(value)
         return value
 
     def value_to_string(self, obj):
